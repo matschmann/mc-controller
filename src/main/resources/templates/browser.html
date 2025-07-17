@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'MusicCast Browser - ' + ${room.name}">MusicCast Browser</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .navigation {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background: #2196F3;
+            color: white;
+        }
+
+        .nav-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .browser-list {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .browser-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .browser-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .browser-item.playable-item {
+            background: linear-gradient(90deg, #f8f9fa 0%, #e8f5e8 100%);
+        }
+
+        .browser-item.playable-item:hover {
+            background: linear-gradient(90deg, #e8f5e8 0%, #d4edda 100%);
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+        }
+
+        .browser-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .item-type {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .play-btn:hover {
+            background: #45a049;
+        }
+
+        .open-btn {
+            background: #FF9800;
+            color: white;
+        }
+
+        .open-btn:hover {
+            background: #F57C00;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .breadcrumb {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .back-to-main {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #FF5722;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .back-to-main:hover {
+            background: #E64A19;
+            transform: scale(1.1);
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #9C27B0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #7B1FA2;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .navigation {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .browser-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .item-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <div class="room-title" th:text="'🎵 ' + ${room.name} + ' - Browser'">Room Browser</div>
+                <div style="color: #666; margin-top: 5px;" th:text="'Durchsuchen Sie Ihre Musiksammlung (' + ${totalItems} + ' Elemente)'">Durchsuchen Sie Ihre Musiksammlung</div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-btn" onclick="prepareInput()" id="prepareBtn">
+                🔧 Input Vorbereiten
+            </button>
+            <button class="nav-btn" onclick="navigateBack()" id="backBtn">
+                ⬅️ Zurück
+            </button>
+            <button class="nav-btn" onclick="refreshAllItems()" id="refreshBtn">
+                🔄 Alle Laden
+            </button>
+            <button class="nav-btn" onclick="debugConnection()" id="debugBtn" style="background: #E91E63;">
+                🔍 Debug
+            </button>
+        </div>
+
+        <div class="breadcrumb" id="breadcrumb" th:text="'📁 Hauptverzeichnis (' + ${totalItems} + ' Elemente)'">
+            📁 Hauptverzeichnis
+        </div>
+
+        <div class="browser-list" id="browserList">
+            <div class="loading" id="loading">
+                Lade Verzeichnis...
+            </div>
+            
+            <div id="itemsList" style="display: none;">
+                <div th:each="item, iterStat : ${items}" class="browser-item" 
+                     th:data-index="${item.index}"
+                     th:data-playable="${item.playable}"
+                     th:data-container="${item.container}"
+                     th:classappend="${!item.container} ? 'playable-item' : ''"
+                     th:onclick="${!item.container} ? 'playItem(' + ${item.index} + ')' : (${item.container} ? 'openFolder(' + ${item.index} + ')' : '')"
+                     th:title="${!item.container} ? 'Klicken zum Abspielen' : (${item.container} ? 'Klicken zum Öffnen' : '')">
+                    <div class="item-icon" th:text="${item.icon}">📁</div>
+                    <div class="item-content">
+                        <div class="item-name" th:text="${item.text}">Item Name</div>
+                        <div class="item-type" 
+                             th:text="${item.container} ? 'Ordner - Klicken zum Öffnen' : 'Datei - Klicken zum Abspielen'">
+                            Type
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn play-btn" 
+                                th:if="${!item.container}"
+                                th:data-index="${item.index}"
+                                onclick="event.stopPropagation(); playItem(this.dataset.index)">
+                            ▶️ Abspielen
+                        </button>
+                        <button class="action-btn open-btn" 
+                                th:if="${item.container}"
+                                th:data-index="${item.index}"
+                                onclick="event.stopPropagation(); openFolder(this.dataset.index)">
+                            📂 Öffnen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-to-main" onclick="window.location.href='/'">🏠</button>
+    <button class="refresh-btn" onclick="refreshAllItems()">🔄</button>
+
+    <script th:inline="javascript">
+        const roomName = /*[[${room.name}]]*/ 'Room';
+        let currentPath = [];
+        let totalItemsCount = /*[[${totalItems}]]*/ 0;
+        
+        // Show items list after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('itemsList').style.display = 'block';
+                updateBreadcrumb();
+            }, 1000);
+        });
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            if (currentPath.length === 0) {
+                breadcrumb.textContent = `📁 Hauptverzeichnis (${totalItemsCount} Elemente)`;
+            } else {
+                breadcrumb.textContent = `📁 ${currentPath.join(' > ')} (${totalItemsCount} Elemente)`;
+            }
+        }
+
+        function prepareInput() {
+            const btn = document.getElementById('prepareBtn');
+            btn.disabled = true;
+            btn.textContent = '🔧 Vorbereitung...';
+            
+            fetch(`/browser/${roomName}/prepare`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    setTimeout(() => refreshList(), 1000);
+                    showMessage('Input erfolgreich vorbereitet', 'success');
+                } else {
+                    showMessage('Fehler beim Vorbereiten des Inputs', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Verbindungsfehler', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '🔧 Input Vorbereiten';
+            });
+        }
+
+        function refreshAllItems() {
+            showLoading();
+            
+            fetch(`/browser/${roomName}/all`)
+            .then(response => response.json())
+            .then(items => {
+                totalItemsCount = items.length;
+                displayItems(items);
+                updateBreadcrumb();
+                showMessage(`${items.length} Elemente geladen`, 'success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Fehler beim Laden aller Elemente', 'error');
+                hideLoading();
+            });
+        }
+
+        function openFolder(index) {
+            showLoading();
+            
+            fetch(`/browser/${roomName}/navigate/${index}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    // Add to breadcrumb path
+                    const itemElement = document.querySelector(`[data-index="${index}"]`);
+                    const folderName = itemElement.querySelector('.item-name').textContent;
+                    currentPath.push(folderName);
+                    
+                    // Load all items in the new folder
+                    setTimeout(() => refreshAllItems(), 500);
+                } else {
+                    showMessage('Fehler beim Öffnen des Ordners', 'error');
+                    hideLoading();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Verbindungsfehler', 'error');
+                hideLoading();
+            });
+        }
+
+        function navigateBack() {
+            showLoading();
+            
+            fetch(`/browser/${roomName}/back`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    // Remove last item from breadcrumb path
+                    if (currentPath.length > 0) {
+                        currentPath.pop();
+                    }
+                    
+                    // Load all items in the parent folder
+                    setTimeout(() => refreshAllItems(), 500);
+                } else {
+                    showMessage('Fehler beim Zurücknavigieren', 'error');
+                    hideLoading();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Verbindungsfehler', 'error');
+                hideLoading();
+            });
+        }
+
+        function playItem(index) {
+            // Visual feedback
+            const itemElement = document.querySelector(`[data-index="${index}"]`);
+            if (itemElement) {
+                const originalBg = itemElement.style.background;
+                itemElement.style.background = 'linear-gradient(90deg, #4CAF50 0%, #81C784 100%)';
+                itemElement.style.color = 'white';
+                
+                setTimeout(() => {
+                    itemElement.style.background = originalBg;
+                    itemElement.style.color = '';
+                }, 2000);
+            }
+            
+            fetch(`/browser/${roomName}/play/${index}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    const trackName = itemElement ? itemElement.querySelector('.item-name').textContent : 'Track';
+                    showMessage(`🎵 Wiedergabe gestartet: ${trackName}`, 'success');
+                } else {
+                    showMessage('Fehler beim Abspielen', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Verbindungsfehler beim Abspielen', 'error');
+            });
+        }
+
+        function displayItems(items) {
+            const itemsList = document.getElementById('itemsList');
+            itemsList.innerHTML = '';
+            
+            if (items.length === 0) {
+                itemsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">Keine Elemente gefunden</div>';
+            } else {
+                items.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'browser-item';
+                    itemDiv.dataset.index = item.index;
+                    
+                    // Add special styling and click handler for ALL non-container items (including 'Datei')
+                    if (!item.container) {
+                        itemDiv.classList.add('playable-item');
+                        itemDiv.style.cursor = 'pointer';
+                        itemDiv.onclick = () => playItem(item.index);
+                        itemDiv.title = 'Klicken zum Abspielen';
+                    } else if (item.container) {
+                        itemDiv.onclick = () => openFolder(item.index);
+                        itemDiv.title = 'Klicken zum Öffnen';
+                    }
+                    
+                    itemDiv.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-content">
+                            <div class="item-name">${item.text}</div>
+                            <div class="item-type">${item.container ? 'Ordner - Klicken zum Öffnen' : 'Datei - Klicken zum Abspielen'}</div>
+                        </div>
+                        <div class="item-actions">
+                            ${!item.container ? `<button class="action-btn play-btn" onclick="event.stopPropagation(); playItem(${item.index})">▶️ Abspielen</button>` : ''}
+                            ${item.container ? `<button class="action-btn open-btn" onclick="event.stopPropagation(); openFolder(${item.index})">📂 Öffnen</button>` : ''}
+                        </div>
+                    `;
+                    
+                    itemsList.appendChild(itemDiv);
+                });
+            }
+            
+            hideLoading();
+        }
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            if (currentPath.length === 0) {
+                breadcrumb.textContent = '📁 Hauptverzeichnis';
+            } else {
+                breadcrumb.textContent = '📁 ' + currentPath.join(' > ');
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('itemsList').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('itemsList').style.display = 'block';
+        }
+
+        function showMessage(message, type) {
+            // Create and show a temporary message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error';
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        function debugConnection() {
+            fetch(`/debug/${roomName}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Debug Info:', data);
+                
+                // Create debug popup
+                const debugWindow = window.open('', 'debug', 'width=800,height=600,scrollbars=yes');
+                debugWindow.document.write(`
+                    <html>
+                    <head><title>MusicCast Debug - ${roomName}</title></head>
+                    <body style="font-family: monospace; padding: 20px;">
+                        <h2>Debug Information für ${roomName}</h2>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </body>
+                    </html>
+                `);
+                debugWindow.document.close();
+            })
+            .catch(error => {
+                console.error('Debug Error:', error);
+                showMessage('Debug-Fehler: ' + error.message, 'error');
+            });
+        }
+    </script>
+</body>
+</html>

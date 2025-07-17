@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicCast Controller</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .room-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .power-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .power-on {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .power-off {
+            background: #f44336;
+            color: white;
+        }
+
+        .controls-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 1.1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .power-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .power-btn:hover {
+            background: #1976D2;
+        }
+
+        .play-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .play-btn:hover {
+            background: #45a049;
+        }
+
+        .pause-btn {
+            background: #FF9800;
+            color: white;
+        }
+
+        .pause-btn:hover {
+            background: #F57C00;
+        }
+
+        .stop-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .stop-btn:hover {
+            background: #d32f2f;
+        }
+
+        .nav-btn {
+            background: #9C27B0;
+            color: white;
+        }
+
+        .nav-btn:hover {
+            background: #7B1FA2;
+        }
+
+        .volume-btn {
+            background: #607D8B;
+            color: white;
+        }
+
+        .volume-btn:hover {
+            background: #455A64;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2196F3;
+            cursor: pointer;
+        }
+
+        .volume-display {
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .track-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .track-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .playback-status {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #FF5722;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #E64A19;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .rooms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .control-btn {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 MusicCast Controller</h1>
+        
+        <div class="rooms-grid">
+            <div th:each="room : ${rooms}" class="room-card">
+                <div class="room-header">
+                    <div class="room-name" th:text="${room.value.name}">Room Name</div>
+                    <div class="power-status" 
+                         th:class="${room.value.powerOn} ? 'power-status power-on' : 'power-status power-off'"
+                         th:text="${room.value.powerOn} ? 'EIN' : 'AUS'">Status</div>
+                </div>
+
+                <!-- Power Control -->
+                <div class="controls-section">
+                    <div class="section-title">Power & Browser</div>
+                    <div class="button-group">
+                        <button class="control-btn power-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="togglePower(this.dataset.room)">
+                            Power Toggle
+                        </button>
+                        <button class="control-btn" 
+                                style="background: #673AB7; color: white;"
+                                th:data-room="${room.value.name}"
+                                onclick="openBrowser(this.dataset.room)">
+                            📁 Browser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="controls-section">
+                    <div class="section-title">Wiedergabe</div>
+                    <div class="button-group">
+                        <button class="control-btn play-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="controlPlayback(this.dataset.room, 'play')">
+                            ▶️ Play
+                        </button>
+                        <button class="control-btn pause-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="controlPlayback(this.dataset.room, 'pause')">
+                            ⏸️ Pause
+                        </button>
+                        <button class="control-btn stop-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="controlPlayback(this.dataset.room, 'stop')">
+                            ⏹️ Stop
+                        </button>
+                    </div>
+                    <div class="button-group">
+                        <button class="control-btn nav-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="controlPlayback(this.dataset.room, 'previous')">
+                            ⏮️ Zurück
+                        </button>
+                        <button class="control-btn nav-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="controlPlayback(this.dataset.room, 'next')">
+                            ⏭️ Weiter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Volume Controls -->
+                <div class="controls-section">
+                    <div class="section-title">Lautstärke</div>
+                    <div class="button-group">
+                        <button class="control-btn volume-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="adjustVolume(this.dataset.room, 'down')">
+                            🔉 Leiser
+                        </button>
+                        <button class="control-btn volume-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="toggleMute(this.dataset.room)">
+                            🔇 Mute
+                        </button>
+                        <button class="control-btn volume-btn" 
+                                th:data-room="${room.value.name}"
+                                onclick="adjustVolume(this.dataset.room, 'up')">
+                            🔊 Lauter
+                        </button>
+                    </div>
+                    <div class="volume-control">
+                        <span>🔈</span>
+                        <input type="range" class="volume-slider" min="0" max="100" 
+                               th:value="${room.value.volume}"
+                               th:data-room="${room.value.name}"
+                               onchange="setVolume(this.dataset.room, this.value)">
+                        <span class="volume-display" th:text="${room.value.volume}">50</span>
+                    </div>
+                </div>
+
+                <!-- Track Info -->
+                <div class="track-info">
+                    <div class="track-title" th:text="${room.value.currentTrack}">No track playing</div>
+                    <div class="playback-status" th:text="'Status: ' + ${room.value.playbackStatus}">Status: stop</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="location.reload()">🔄</button>
+
+    <script>
+        function togglePower(roomName) {
+            fetch(`/power/${roomName}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('Fehler beim Schalten der Power');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Verbindungsfehler');
+            });
+        }
+
+        function controlPlayback(roomName, action) {
+            fetch(`/playback/${roomName}/${action}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    alert('Fehler bei der Wiedergabe-Steuerung');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Verbindungsfehler');
+            });
+        }
+
+        function adjustVolume(roomName, direction) {
+            fetch(`/volume/${roomName}/${direction}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    alert('Fehler bei der Lautstärke-Regelung');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Verbindungsfehler');
+            });
+        }
+
+        function setVolume(roomName, volume) {
+            fetch(`/volume/${roomName}?volume=${volume}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result !== 'success') {
+                    alert('Fehler beim Setzen der Lautstärke');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Verbindungsfehler');
+            });
+        }
+
+        function toggleMute(roomName) {
+            fetch(`/mute/${roomName}`, {
+                method: 'POST'
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === 'success') {
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    alert('Fehler beim Mute-Toggle');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Verbindungsfehler');
+            });
+        }
+
+        function openBrowser(roomName) {
+            window.location.href = `/browser/${roomName}`;
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>
