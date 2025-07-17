@@ -147,4 +147,11 @@ public class MusicCastController {
     public Map<String, Object> debugRoom(@PathVariable String roomName) {
         return musicCastService.debugRoomConnection(roomName);
     }
+
+    @GetMapping("/cover/{roomName}")
+    @ResponseBody
+    public String getCurrentTrackCover(@PathVariable String roomName) {
+        String coverUrl = musicCastService.getCurrentTrackCover(roomName);
+        return coverUrl != null ? coverUrl : "";
+    }
 }

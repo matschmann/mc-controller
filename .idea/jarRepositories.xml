@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteRepositoriesConfiguration">
+    <remote-repository>
+      <option name="id" value="sab-dispome-maven-release-local" />
+      <option name="name" value="sab-dispome-maven-release-local" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-dispome-maven-release-local" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="sab-kip-maven-release-local" />
+      <option name="name" value="sab-kip-maven-release-local" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kip-maven-release-local" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="sab-kit-maven-remote-virtual" />
+      <option name="name" value="sab-kit-maven-remote-virtual" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kit-maven-remote-virtual" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Maven Central Repository" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kit-maven-remote-virtual" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="sab-dispome-maven-stage-local" />
+      <option name="name" value="sab-dispome-maven-stage-local" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-dispome-maven-stage-local" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="snapshots" />
+      <option name="name" value="Maven Central Repository" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kit-maven-remote-virtual" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="sab-kip-maven-stage-local" />
+      <option name="name" value="sab-kip-maven-stage-local" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kip-maven-stage-local" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Maven Central repository" />
+      <option name="url" value="https://repo1.maven.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="sab-kit-maven-release-local" />
+      <option name="name" value="sab-kit-maven-release-local" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kit-maven-release-local" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="jboss.community" />
+      <option name="name" value="JBoss Community repository" />
+      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="sab-kit-maven-stage-local" />
+      <option name="name" value="sab-kit-maven-stage-local" />
+      <option name="url" value="https://bahnhub.tech.rz.db.de:443/artifactory/sab-kit-maven-stage-local" />
+    </remote-repository>
+  </component>
+</project>

@@ -250,6 +250,12 @@ public class MusicCastService {
                         BrowserItem browserItem = new BrowserItem();
                         browserItem.setIndex(index + i);
                         
+                        // Debug: Print all available fields in the item
+                        System.out.println("=== Item " + i + " Debug Info ===");
+                        item.fieldNames().forEachRemaining(fieldName -> {
+                            System.out.println("Field: " + fieldName + " = " + item.get(fieldName).asText());
+                        });
+                        
                         if (item.has("text")) {
                             browserItem.setText(item.get("text").asText());
                         }
@@ -269,6 +275,19 @@ public class MusicCastService {
                                              ", Attribute: " + attribute + 
                                              ", Playable: " + browserItem.isPlayable() + 
                                              ", Container: " + browserItem.isContainer());
+                        }
+                        
+                        // Try multiple possible cover URL fields
+                        String[] possibleCoverFields = {"albumart_url", "thumbnail", "image_url", "cover_art", "artwork_url", "album_art"};
+                        for (String field : possibleCoverFields) {
+                            if (item.has(field)) {
+                                String coverUrl = item.get(field).asText();
+                                if (!coverUrl.isEmpty() && !coverUrl.equals("")) {
+                                    browserItem.setAlbumartUrl(coverUrl);
+                                    System.out.println("Found cover in field '" + field + "': " + coverUrl);
+                                    break;
+                                }
+                            }
                         }
                         
                         items.add(browserItem);
@@ -332,6 +351,43 @@ public class MusicCastService {
         
         System.out.println("Total items loaded: " + allItems.size());
         return allItems;
+    }
+
+    public String getCurrentTrackCover(String roomName) {
+        Room room = rooms.get(roomName);
+        if (room == null) return null;
+
+        try {
+            String url = String.format("http://%s/YamahaExtendedControl/v1/netusb/getPlayInfo", 
+                                     room.getIpAddress());
+            String response = restTemplate.getForObject(url, String.class);
+            
+            if (response != null) {
+                JsonNode jsonNode = objectMapper.readTree(response);
+                
+                // Debug: Print all available fields
+                System.out.println("=== Current Track Debug Info ===");
+                jsonNode.fieldNames().forEachRemaining(fieldName -> {
+                    System.out.println("Field: " + fieldName + " = " + jsonNode.get(fieldName).asText());
+                });
+                
+                // Try multiple possible cover URL fields
+                String[] possibleCoverFields = {"albumart_url", "thumbnail", "image_url", "cover_art", "artwork_url", "album_art"};
+                for (String field : possibleCoverFields) {
+                    if (jsonNode.has(field)) {
+                        String coverUrl = jsonNode.get(field).asText();
+                        if (!coverUrl.isEmpty() && !coverUrl.equals("")) {
+                            System.out.println("Found current track cover in field '" + field + "': " + coverUrl);
+                            return coverUrl;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting current track cover for room " + roomName + ": " + e.getMessage());
+        }
+        
+        return null;
     }
 
     public boolean navigateToItem(String roomName, int index) {

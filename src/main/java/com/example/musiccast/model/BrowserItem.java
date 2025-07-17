@@ -6,6 +6,7 @@ public class BrowserItem {
     private boolean playable;
     private boolean container;
     private int index;
+    private String albumartUrl;
 
     public BrowserItem() {}
 
@@ -56,6 +57,14 @@ public class BrowserItem {
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public String getAlbumartUrl() {
+        return albumartUrl;
+    }
+
+    public void setAlbumartUrl(String albumartUrl) {
+        this.albumartUrl = albumartUrl;
     }
 
     public String getIcon() {

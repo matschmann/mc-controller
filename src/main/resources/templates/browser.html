@@ -112,6 +112,34 @@
             min-width: 30px;
         }
 
+        .item-cover {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            margin-right: 15px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .item-cover:hover {
+            transform: scale(1.1);
+        }
+
+        .item-cover-placeholder {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            margin-right: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
         .item-content {
             flex: 1;
         }
@@ -274,6 +302,9 @@
             <button class="nav-btn" onclick="debugConnection()" id="debugBtn" style="background: #E91E63;">
                 🔍 Debug
             </button>
+            <button class="nav-btn" onclick="testCover()" id="coverBtn" style="background: #FF9800;">
+                🖼️ Cover Test
+            </button>
         </div>
 
         <div class="breadcrumb" id="breadcrumb" th:text="'📁 Hauptverzeichnis (' + ${totalItems} + ' Elemente)'">
@@ -293,7 +324,16 @@
                      th:classappend="${!item.container} ? 'playable-item' : ''"
                      th:onclick="${!item.container} ? 'playItem(' + ${item.index} + ')' : (${item.container} ? 'openFolder(' + ${item.index} + ')' : '')"
                      th:title="${!item.container} ? 'Klicken zum Abspielen' : (${item.container} ? 'Klicken zum Öffnen' : '')">
-                    <div class="item-icon" th:text="${item.icon}">📁</div>
+                    
+                    <!-- Cover Image or Icon -->
+                    <div th:if="${item.albumartUrl != null and !#strings.isEmpty(item.albumartUrl)}">
+                        <img class="item-cover" th:src="${item.albumartUrl}" th:alt="${item.text}" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="item-cover-placeholder" style="display: none;" th:text="${item.icon}">📁</div>
+                    </div>
+                    <div th:unless="${item.albumartUrl != null and !#strings.isEmpty(item.albumartUrl)}" 
+                         class="item-cover-placeholder" th:text="${item.icon}">📁</div>
+                    
                     <div class="item-content">
                         <div class="item-name" th:text="${item.text}">Item Name</div>
                         <div class="item-type" 
@@ -502,8 +542,20 @@
                         itemDiv.title = 'Klicken zum Öffnen';
                     }
                     
+                    // Create cover image or placeholder
+                    let coverHtml = '';
+                    if (item.albumartUrl && item.albumartUrl.trim() !== '') {
+                        coverHtml = `
+                            <img class="item-cover" src="${item.albumartUrl}" alt="${item.text}" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="item-cover-placeholder" style="display: none;">${item.icon}</div>
+                        `;
+                    } else {
+                        coverHtml = `<div class="item-cover-placeholder">${item.icon}</div>`;
+                    }
+                    
                     itemDiv.innerHTML = `
-                        <div class="item-icon">${item.icon}</div>
+                        ${coverHtml}
                         <div class="item-content">
                             <div class="item-name">${item.text}</div>
                             <div class="item-type">${item.container ? 'Ordner - Klicken zum Öffnen' : 'Datei - Klicken zum Abspielen'}</div>
@@ -586,6 +638,37 @@
             .catch(error => {
                 console.error('Debug Error:', error);
                 showMessage('Debug-Fehler: ' + error.message, 'error');
+            });
+        }
+
+        function testCover() {
+            fetch(`/cover/${roomName}`)
+            .then(response => response.text())
+            .then(coverUrl => {
+                console.log('Cover URL:', coverUrl);
+                
+                if (coverUrl && coverUrl.trim() !== '') {
+                    // Show cover in popup
+                    const coverWindow = window.open('', 'cover', 'width=400,height=400');
+                    coverWindow.document.write(`
+                        <html>
+                        <head><title>Current Track Cover - ${roomName}</title></head>
+                        <body style="padding: 20px; text-align: center;">
+                            <h3>Aktueller Track Cover</h3>
+                            <img src="${coverUrl}" style="max-width: 300px; max-height: 300px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <p style="font-family: monospace; word-break: break-all; margin-top: 20px;">${coverUrl}</p>
+                        </body>
+                        </html>
+                    `);
+                    coverWindow.document.close();
+                    showMessage('Cover gefunden und angezeigt!', 'success');
+                } else {
+                    showMessage('Kein Cover für aktuellen Track gefunden', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Cover Error:', error);
+                showMessage('Cover-Test-Fehler: ' + error.message, 'error');
             });
         }
     </script>
