@@ -19,7 +19,7 @@ application.log
 *.ipr
 out/
 .idea_modules/
-.idea/
+.idea
 
 # Eclipse
 .project
