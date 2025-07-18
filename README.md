@@ -21,8 +21,11 @@ Eine Spring Boot Web-Anwendung zur Steuerung von Yamaha MusicCast Geräten in me
 - Java 17 oder höher
 - Maven 3.6 oder höher
 - Yamaha MusicCast Geräte im Netzwerk
+- Für Docker: Docker Desktop oder Docker Engine mit Buildx
 
 ## Installation und Start
+
+### Option 1: Direkt mit Maven
 
 1. **Projekt kompilieren:**
    ```bash
@@ -38,6 +41,43 @@ Eine Spring Boot Web-Anwendung zur Steuerung von Yamaha MusicCast Geräten in me
    ```
    http://localhost:8080
    ```
+
+### Option 2: Docker (Multi-Architektur Support)
+
+Das Docker-Setup unterstützt sowohl **amd64** als auch **arm64** Architekturen (z.B. Apple Silicon Macs, Raspberry Pi).
+
+#### Einfacher Start mit Docker Compose:
+```bash
+docker-compose up --build
+```
+
+#### Multi-Architektur Build:
+```bash
+# Lokaler Build für aktuelle Architektur
+./build-multiarch.sh
+
+# Build für beide Architekturen (amd64 + arm64)
+./build-multiarch.sh --push
+```
+
+#### Manueller Docker Build:
+```bash
+# Für aktuelle Architektur
+docker build -t musiccast-controller .
+
+# Für spezifische Architektur
+docker build --platform linux/arm64 -t musiccast-controller:arm64 .
+docker build --platform linux/amd64 -t musiccast-controller:amd64 .
+```
+
+#### Docker Run:
+```bash
+docker run -d \
+  --name musiccast-controller \
+  -p 8080:8080 \
+  --restart unless-stopped \
+  musiccast-controller
+```
 
 ## IP-Adressen anpassen
 
@@ -66,6 +106,19 @@ Die Anwendung nutzt die Yamaha MusicCast HTTP API:
 1. **Geräte nicht erreichbar**: Überprüfen Sie die IP-Adressen und Netzwerkverbindung
 2. **Keine Reaktion**: Stellen Sie sicher, dass die MusicCast-Geräte eingeschaltet sind
 3. **Port-Konflikt**: Ändern Sie den Port in `application.properties` falls 8080 belegt ist
+4. **Docker Multi-Arch Probleme**: Stellen Sie sicher, dass Docker Buildx aktiviert ist
+
+### Docker-spezifische Probleme:
+```bash
+# Buildx Status prüfen
+docker buildx ls
+
+# Buildx installieren falls nicht verfügbar
+docker buildx install
+
+# Architektur des Images prüfen
+docker buildx imagetools inspect musiccast-controller:latest
+```
 
 ## Features
 
@@ -74,3 +127,4 @@ Die Anwendung nutzt die Yamaha MusicCast HTTP API:
 - Deutsche Benutzeroberfläche
 - Echtzeit-Feedback bei Aktionen
 - Fehlerbehandlung mit Benutzer-Feedback
+- Multi-Architektur Docker Support (amd64/arm64)
