@@ -478,4 +478,171 @@ public class MusicCastService {
         
         return debug;
     }
+
+    // Multiroom functionality
+    public boolean createMultiroomGroup(String serverRoomName, List<String> clientRoomNames) {
+        Room serverRoom = rooms.get(serverRoomName);
+        if (serverRoom == null) {
+            System.err.println("Server room not found: " + serverRoomName);
+            return false;
+        }
+
+        try {
+            // Generate a unique group ID
+            String groupId = java.util.UUID.randomUUID().toString().replace("-", "");
+            
+            // Step 1: Set server info
+            String serverUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/setServerInfo", 
+                                           serverRoom.getIpAddress());
+            
+            StringBuilder clientListJson = new StringBuilder("[");
+            for (int i = 0; i < clientRoomNames.size(); i++) {
+                Room clientRoom = rooms.get(clientRoomNames.get(i));
+                if (clientRoom != null) {
+                    if (i > 0) clientListJson.append(",");
+                    clientListJson.append("\"").append(clientRoom.getIpAddress()).append("\"");
+                }
+            }
+            clientListJson.append("]");
+            
+            String serverPayload = String.format("{\"client_list\":%s,\"group_id\":\"%s\",\"type\":\"add\",\"zone\":\"main\"}", 
+                                               clientListJson.toString(), groupId);
+            
+            System.out.println("Setting server info: " + serverPayload);
+            
+            // Use POST request with JSON payload
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            org.springframework.http.HttpEntity<String> serverEntity = new org.springframework.http.HttpEntity<>(serverPayload, headers);
+            
+            restTemplate.postForObject(serverUrl, serverEntity, String.class);
+            
+            // Step 2: Set client info for each client
+            for (String clientRoomName : clientRoomNames) {
+                Room clientRoom = rooms.get(clientRoomName);
+                if (clientRoom != null) {
+                    String clientUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/setClientInfo", 
+                                                   clientRoom.getIpAddress());
+                    
+                    String clientPayload = String.format("{\"group_id\":\"%s\",\"server_ip_address\":\"%s\",\"zone\":[\"main\"]}", 
+                                                       groupId, serverRoom.getIpAddress());
+                    
+                    System.out.println("Setting client info for " + clientRoomName + ": " + clientPayload);
+                    
+                    org.springframework.http.HttpEntity<String> clientEntity = new org.springframework.http.HttpEntity<>(clientPayload, headers);
+                    restTemplate.postForObject(clientUrl, clientEntity, String.class);
+                }
+            }
+            
+            // Step 3: Start distribution
+            String startUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/startDistribution?num=0", 
+                                          serverRoom.getIpAddress());
+            restTemplate.getForObject(startUrl, String.class);
+            
+            // Step 4: Set group name
+            String groupName = serverRoomName + " + " + String.join(" + ", clientRoomNames);
+            String groupNameUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/setGroupName", 
+                                              serverRoom.getIpAddress());
+            String groupNamePayload = String.format("{\"name\":\"%s\"}", groupName);
+            
+            org.springframework.http.HttpEntity<String> groupNameEntity = new org.springframework.http.HttpEntity<>(groupNamePayload, headers);
+            restTemplate.postForObject(groupNameUrl, groupNameEntity, String.class);
+            
+            System.out.println("Multiroom group created successfully: " + groupName);
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println("Error creating multiroom group: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean disconnectMultiroom(String roomName) {
+        Room room = rooms.get(roomName);
+        if (room == null) {
+            System.err.println("Room not found: " + roomName);
+            return false;
+        }
+
+        try {
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            
+            // Step 1: Clear client info
+            String clientUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/setClientInfo", 
+                                           room.getIpAddress());
+            String clientPayload = "{\"group_id\":\"\",\"server_ip_address\":\"\"}";
+            
+            org.springframework.http.HttpEntity<String> clientEntity = new org.springframework.http.HttpEntity<>(clientPayload, headers);
+            restTemplate.postForObject(clientUrl, clientEntity, String.class);
+            
+            // Step 2: Clear server info
+            String serverUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/setServerInfo", 
+                                           room.getIpAddress());
+            String serverPayload = "{\"group_id\":\"\",\"zone\":\"main\"}";
+            
+            org.springframework.http.HttpEntity<String> serverEntity = new org.springframework.http.HttpEntity<>(serverPayload, headers);
+            restTemplate.postForObject(serverUrl, serverEntity, String.class);
+            
+            // Step 3: Clear group name
+            String groupNameUrl = String.format("http://%s/YamahaExtendedControl/v1/dist/setGroupName", 
+                                              room.getIpAddress());
+            String groupNamePayload = "{\"name\":\"\"}";
+            
+            org.springframework.http.HttpEntity<String> groupNameEntity = new org.springframework.http.HttpEntity<>(groupNamePayload, headers);
+            restTemplate.postForObject(groupNameUrl, groupNameEntity, String.class);
+            
+            System.out.println("Multiroom disconnected for room: " + roomName);
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println("Error disconnecting multiroom for room " + roomName + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Map<String, Object> getMultiroomStatus(String roomName) {
+        Room room = rooms.get(roomName);
+        Map<String, Object> status = new HashMap<>();
+        
+        if (room == null) {
+            status.put("error", "Room not found");
+            return status;
+        }
+        
+        try {
+            String url = String.format("http://%s/YamahaExtendedControl/v1/dist/getDistributionInfo", 
+                                     room.getIpAddress());
+            String response = restTemplate.getForObject(url, String.class);
+            
+            if (response != null) {
+                JsonNode jsonNode = objectMapper.readTree(response);
+                status.put("raw_response", response);
+                
+                if (jsonNode.has("group_id")) {
+                    status.put("group_id", jsonNode.get("group_id").asText());
+                }
+                if (jsonNode.has("group_name")) {
+                    status.put("group_name", jsonNode.get("group_name").asText());
+                }
+                if (jsonNode.has("role")) {
+                    status.put("role", jsonNode.get("role").asText());
+                }
+                if (jsonNode.has("server_zone")) {
+                    status.put("server_zone", jsonNode.get("server_zone").asText());
+                }
+                if (jsonNode.has("client_list")) {
+                    status.put("client_list", jsonNode.get("client_list"));
+                }
+            }
+            
+        } catch (Exception e) {
+            status.put("error", e.getMessage());
+            System.err.println("Error getting multiroom status for room " + roomName + ": " + e.getMessage());
+        }
+        
+        return status;
+    }
 }

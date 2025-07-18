@@ -260,7 +260,7 @@
 
                 <!-- Power Control -->
                 <div class="controls-section">
-                    <div class="section-title">Power & Browser</div>
+                    <div class="section-title">Power & Navigation</div>
                     <div class="button-group">
                         <button class="control-btn power-btn" 
                                 th:data-room="${room.value.name}"
@@ -272,6 +272,11 @@
                                 th:data-room="${room.value.name}"
                                 onclick="openBrowser(this.dataset.room)">
                             📁 Browser
+                        </button>
+                        <button class="control-btn" 
+                                style="background: #FF9800; color: white;"
+                                onclick="openMultiroom()">
+                            🔗 Multiroom
                         </button>
                     </div>
                 </div>
@@ -442,6 +447,10 @@
 
         function openBrowser(roomName) {
             window.location.href = `/browser/${roomName}`;
+        }
+
+        function openMultiroom() {
+            window.location.href = '/multiroom';
         }
 
         // Auto-refresh every 30 seconds

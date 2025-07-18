@@ -154,4 +154,32 @@ public class MusicCastController {
         String coverUrl = musicCastService.getCurrentTrackCover(roomName);
         return coverUrl != null ? coverUrl : "";
     }
+
+    // Multiroom endpoints
+    @PostMapping("/multiroom/create")
+    @ResponseBody
+    public String createMultiroomGroup(@RequestParam String server, @RequestParam List<String> clients) {
+        boolean success = musicCastService.createMultiroomGroup(server, clients);
+        return success ? "success" : "error";
+    }
+
+    @PostMapping("/multiroom/disconnect/{roomName}")
+    @ResponseBody
+    public String disconnectMultiroom(@PathVariable String roomName) {
+        boolean success = musicCastService.disconnectMultiroom(roomName);
+        return success ? "success" : "error";
+    }
+
+    @GetMapping("/multiroom/status/{roomName}")
+    @ResponseBody
+    public Map<String, Object> getMultiroomStatus(@PathVariable String roomName) {
+        return musicCastService.getMultiroomStatus(roomName);
+    }
+
+    @GetMapping("/multiroom")
+    public String showMultiroom(Model model) {
+        Map<String, Room> rooms = musicCastService.getAllRooms();
+        model.addAttribute("rooms", rooms);
+        return "multiroom";
+    }
 }
